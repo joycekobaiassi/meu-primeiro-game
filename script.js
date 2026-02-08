@@ -109,9 +109,14 @@ function draw() {
      player.y<bonus.y+bonus.size &&
      player.y+player.height>bonus.y){
 
-    bonus.active=false;
-    player.width=48;
-    player.height=48;
+bonus.active = false;
+
+// sobe o personagem antes de crescer
+player.y -= 16;
+
+player.width = 48;
+player.height = 48;
+
   }
 
   if(player.x<enemy.x+enemy.width &&
