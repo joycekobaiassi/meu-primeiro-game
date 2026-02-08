@@ -147,15 +147,16 @@ function draw() {
   // inimigo
   ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
 
-  // colisão inimigo
-  if (
-    player.x < enemy.x + enemy.width &&
-    player.x + player.width > enemy.x &&
-    player.y < enemy.y + enemy.height &&
-    player.y + player.height > enemy.y
-  ) {
-    gameOver = true;
-  }
+// colisão inimigo
+if (
+  player.x < enemy.x + enemy.width &&
+  player.x + player.width > enemy.x &&
+  player.y < enemy.y + enemy.height &&
+  player.y + player.height > enemy.y
+) {
+  gameOver = true;
+}
+
 
   score++;
   requestAnimationFrame(draw);
