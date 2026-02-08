@@ -194,3 +194,25 @@ document.addEventListener("keydown", e => {
 });
 
 draw();
+// controles mobile 📱
+document.getElementById("left").addEventListener("touchstart", () => {
+  player.dx = -3;
+});
+
+document.getElementById("right").addEventListener("touchstart", () => {
+  player.dx = 3;
+});
+
+document.getElementById("jump").addEventListener("touchstart", () => {
+
+  if (!gameStarted) {
+    gameStarted = true;
+    onGround = true;
+    return;
+  }
+
+  if (onGround) {
+    player.dy = -12;
+    onGround = false;
+  }
+});
