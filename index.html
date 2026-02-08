@@ -1,29 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
+<meta charset="UTF-8">
 <title>Meu Primeiro Jogo</title>
-<style>
-  canvas {
-    border: 2px solid #333;
-    display: block;
-    margin: 20px auto;
-  }
-</style>
 
+<style>
+body {
+  margin:0;
+  text-align:center;
+  background:#ddd;
+}
+
+canvas {
+  background:#e6f0ff;
+  display:block;
+  margin:auto;
+}
+
+.controls {
+  margin-top:10px;
+}
+
+button {
+  font-size:30px;
+  padding:15px 25px;
+  margin:5px;
+}
+</style>
 </head>
 
 <body>
 
-<canvas id="game" width="600" height="300"></canvas>
+<canvas id="game"></canvas>
 
-<script defer src="script.js"></script>
-<div style="text-align:center;margin-top:10px">
-
-<button id="left">⬅️</button>
-<button id="jump">⬆️</button>
-<button id="right">➡️</button>
-
+<div class="controls">
+  <button id="left">⬅️</button>
+  <button id="jump">⬆️</button>
+  <button id="right">➡️</button>
 </div>
 
+<script src="script.js"></script>
 </body>
 </html>
