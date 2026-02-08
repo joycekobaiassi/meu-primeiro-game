@@ -148,13 +148,23 @@ function draw() {
   ctx.drawImage(enemyImg, enemy.x, enemy.y, enemy.width, enemy.height);
 
 // colisão inimigo
+// colisão inimigo (Mario style)
 if (
   player.x < enemy.x + enemy.width &&
   player.x + player.width > enemy.x &&
   player.y < enemy.y + enemy.height &&
   player.y + player.height > enemy.y
 ) {
-  gameOver = true;
+
+  // pulou em cima
+  if (player.dy > 0 && player.y + player.height - enemy.y < 15) {
+    enemy.x = -100;       // some inimigo
+    player.dy = -8;      // quicada
+    score += 50;
+
+  } else {
+    gameOver = true;
+  }
 }
 
 
