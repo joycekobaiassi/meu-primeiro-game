@@ -7,6 +7,8 @@ let lives=3;
 let cameraX=0;
 let started=false;
 
+const WORLD_WIDTH=1600;
+
 const music=new Audio("music.mp3");
 music.loop=true;
 music.volume=0.4;
@@ -17,7 +19,7 @@ const coinSound=new Audio("coin.mp3");
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 
-canvas.width=1600;
+canvas.width=window.innerWidth;
 canvas.height=400;
 
 // imagens
@@ -49,7 +51,7 @@ for(let i=0;i<8;i++){
 let platforms=[];
 let lastY=330;
 
-for(let x=80;x<canvas.width-80;x+=120){
+for(let x=80;x<WORLD_WIDTH-80;x+=120){
  let y=lastY+(Math.random()*140-70);
  if(y>330)y=330;
  if(y<140)y=140;
@@ -57,11 +59,11 @@ for(let x=80;x<canvas.width-80;x+=120){
  lastY=y;
 }
 
-// bônus
+// moedas
 let bonuses=[];
 for(let i=0;i<6;i++){
  bonuses.push({
-  x:200+Math.random()*(canvas.width-300),
+  x:200+Math.random()*(WORLD_WIDTH-300),
   y:140+Math.random()*150,
   size:24,
   active:true,
@@ -70,12 +72,12 @@ for(let i=0;i<6;i++){
 }
 
 // bandeira
-let flag={x:canvas.width-60,y:180,w:20,h:60,wave:0};
+let flag={x:WORLD_WIDTH-60,y:180,w:20,h:60,wave:0};
 
 const gravity=0.6;
 let score=0;
 
-// START TOUCH / CLICK
+// MOBILE CONTROLS
 function startGame(){
  if(started)return;
  started=true;
@@ -92,45 +94,67 @@ canvas.addEventListener("touchstart",()=>{
  }
 });
 
-canvas.addEventListener("mousedown",startGame);
+canvas.addEventListener("touchmove",e=>{
+ let x=e.touches[0].clientX;
+ if(x<window.innerWidth/2) player.dx=-3;
+ else player.dx=3;
+});
+
+canvas.addEventListener("touchend",()=>player.dx=0);
+
+// teclado PC
+document.addEventListener("keydown",e=>{
+ if(e.code==="ArrowLeft")player.dx=-3;
+ if(e.code==="ArrowRight")player.dx=3;
+
+ if(e.code==="Space"||e.code==="ArrowUp"){
+  startGame();
+  if(onGround){
+   player.dy=-12;
+   jumpSound.play().catch(()=>{});
+   onGround=false;
+  }
+ }
+
+ if(e.code==="KeyR"&&(gameOver||win))location.reload();
+});
+
+document.addEventListener("keyup",()=>player.dx=0);
 
 function draw(){
 
-cameraX=player.x-300;
+cameraX=player.x-200;
 if(cameraX<0)cameraX=0;
 
-// tela inicial
 if(!gameStarted){
  ctx.fillStyle="#e6f0ff";
  ctx.fillRect(0,0,canvas.width,canvas.height);
  ctx.fillStyle="black";
- ctx.font="24px Arial";
+ ctx.font="22px Arial";
  ctx.textAlign="center";
- ctx.fillText("TOQUE NA TELA PARA COMEÇAR",canvas.width/2,160);
+ ctx.fillText("TOQUE NA TELA PARA COMEÇAR",canvas.width/2,180);
  requestAnimationFrame(draw);
  return;
 }
 
-// vitória
 if(win){
- ctx.fillStyle="rgba(0,0,0,0.6)";
+ ctx.fillStyle="rgba(0,0,0,.6)";
  ctx.fillRect(0,0,canvas.width,canvas.height);
  ctx.fillStyle="white";
  ctx.font="28px Arial";
- ctx.textAlign="center";
  ctx.fillText("VOCÊ VENCEU!",canvas.width/2,160);
+ ctx.font="16px Arial";
  ctx.fillText("TOQUE PARA REINICIAR",canvas.width/2,200);
  return;
 }
 
-// game over
 if(gameOver){
- ctx.fillStyle="rgba(0,0,0,0.6)";
+ ctx.fillStyle="rgba(0,0,0,.6)";
  ctx.fillRect(0,0,canvas.width,canvas.height);
  ctx.fillStyle="white";
  ctx.font="28px Arial";
- ctx.textAlign="center";
  ctx.fillText("GAME OVER",canvas.width/2,160);
+ ctx.font="16px Arial";
  ctx.fillText("TOQUE PARA REINICIAR",canvas.width/2,200);
  return;
 }
@@ -148,6 +172,7 @@ ctx.fillText("VIDAS: "+lives,20,60);
 // física
 player.dy+=gravity;
 player.y+=player.dy;
+player.x+=player.dx;
 
 if(player.y>360-player.height){
  player.y=360-player.height;
@@ -159,13 +184,15 @@ if(player.y>360-player.height){
 ctx.fillStyle="green";
 platforms.forEach(p=>{
  ctx.fillRect(p.x-cameraX,p.y,p.w,10);
+
  if(player.x<p.x+p.w &&
-    player.x+player.width>p.x &&
-    player.y+player.height>p.y &&
-    player.y+player.height<p.y+10){
-   player.y=p.y-player.height;
-   player.dy=0;
-   onGround=true;
+ player.x+player.width>p.x &&
+ player.y+player.height>p.y &&
+ player.y+player.height<p.y+10){
+
+  player.y=p.y-player.height;
+  player.dy=0;
+  onGround=true;
  }
 });
 
@@ -173,10 +200,10 @@ platforms.forEach(p=>{
 flag.wave+=0.1;
 ctx.fillStyle="black";
 ctx.fillRect(flag.x-cameraX+8,flag.y-20,4,80);
+
 ctx.fillStyle="red";
 ctx.fillRect(flag.x-cameraX,flag.y,flag.w,flag.h);
 
-// vitória
 if(player.x<flag.x+flag.w &&
  player.x+player.width>flag.x &&
  player.y<flag.y+flag.h &&
@@ -184,7 +211,7 @@ if(player.x<flag.x+flag.w &&
  win=true;
 }
 
-// moedas girando
+// moedas
 bonuses.forEach(b=>{
  if(b.active){
   b.rot+=0.1;
@@ -198,8 +225,10 @@ bonuses.forEach(b=>{
    player.x+player.width>b.x &&
    player.y<b.y+24 &&
    player.y+player.height>b.y){
+
    b.active=false;
    coinSound.play().catch(()=>{});
+
    if(!player.big){
     player.big=true;
     player.width=48;
@@ -213,12 +242,14 @@ bonuses.forEach(b=>{
 // inimigos
 enemies.forEach(e=>{
  e.x+=e.dx;
+ if(e.x<0||e.x+e.width>WORLD_WIDTH)e.dx*=-1;
+
  ctx.drawImage(enemyImg,e.x-cameraX,e.y,e.width,e.height);
 
  if(player.x<e.x+e.width &&
-  player.x+player.width>e.x &&
-  player.y<e.y+e.height &&
-  player.y+player.height>e.y){
+ player.x+player.width>e.x &&
+ player.y<e.y+e.height &&
+ player.y+player.height>e.y){
 
   if(player.dy>0){
    e.x=-500;
@@ -230,7 +261,7 @@ enemies.forEach(e=>{
    player.x=50;
    player.y=300;
    invincible=true;
-   setTimeout(()=>invincible=false,1000);
+   setTimeout(()=>invincible=false,1200);
   }
  }
 });
