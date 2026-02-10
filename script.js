@@ -5,23 +5,22 @@ let onGround=false;
 let invincible=false;
 let lives=3;
 let cameraX=0;
-
-const WORLD_WIDTH=2400;
+let started=false;
 
 const music=new Audio("music.mp3");
 music.loop=true;
 music.volume=0.4;
-const jumpSound=new Audio("jump.wav");
-const coinSound=new Audio("coin.wav");
-const hitSound=new Audio("hit.wav");
 
+const jumpSound=new Audio("jump.mp3");
+const coinSound=new Audio("coin.mp3");
 
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 
-canvas.width=900;
+canvas.width=1600;
 canvas.height=400;
 
+// imagens
 const playerImg=new Image();
 playerImg.src="player.png";
 
@@ -31,14 +30,14 @@ enemyImg.src="enemy.png";
 const bonusImg=new Image();
 bonusImg.src="bonus.png";
 
-let particles=[];
-
+// jogador
 let player={x:50,y:300,width:32,height:32,dx:0,dy:0,big:false};
 
+// inimigos
 let enemies=[];
-for(let i=0;i<10;i++){
+for(let i=0;i<8;i++){
  enemies.push({
-  x:400+Math.random()*1800,
+  x:400+Math.random()*1000,
   y:340,
   width:24,
   height:24,
@@ -46,90 +45,109 @@ for(let i=0;i<10;i++){
  });
 }
 
+// plataformas
 let platforms=[];
-let lastY=320;
+let lastY=330;
 
-for(let x=100;x<WORLD_WIDTH-100;x+=160){
- let y=lastY+(Math.random()*160-80);
- y=Math.max(140,Math.min(330,y));
- platforms.push({x,y,w:120});
+for(let x=80;x<canvas.width-80;x+=120){
+ let y=lastY+(Math.random()*140-70);
+ if(y>330)y=330;
+ if(y<140)y=140;
+ platforms.push({x,y,w:100});
  lastY=y;
 }
 
+// bônus
 let bonuses=[];
-for(let i=0;i<8;i++){
+for(let i=0;i<6;i++){
  bonuses.push({
-  x:200+Math.random()*(WORLD_WIDTH-300),
-  y:120+Math.random()*160,
+  x:200+Math.random()*(canvas.width-300),
+  y:140+Math.random()*150,
   size:24,
-  rot:0,
-  active:true
+  active:true,
+  rot:0
  });
 }
 
-let clouds=[];
-for(let i=0;i<6;i++){
- clouds.push({x:Math.random()*WORLD_WIDTH,y:40+Math.random()*80,s:40+Math.random()*40});
-}
-
-let flag={x:WORLD_WIDTH-80,y:180,w:20,h:60,wave:0};
+// bandeira
+let flag={x:canvas.width-60,y:180,w:20,h:60,wave:0};
 
 const gravity=0.6;
 let score=0;
 
+// START TOUCH / CLICK
+function startGame(){
+ if(started)return;
+ started=true;
+ gameStarted=true;
+ music.play().catch(()=>{});
+}
+
+canvas.addEventListener("touchstart",()=>{
+ startGame();
+ if(onGround){
+  player.dy=-12;
+  jumpSound.play().catch(()=>{});
+  onGround=false;
+ }
+});
+
+canvas.addEventListener("mousedown",startGame);
+
 function draw(){
 
 cameraX=player.x-300;
-cameraX=Math.max(0,Math.min(WORLD_WIDTH-canvas.width,cameraX));
+if(cameraX<0)cameraX=0;
 
+// tela inicial
 if(!gameStarted){
- ctx.fillStyle="#cce6ff";
+ ctx.fillStyle="#e6f0ff";
  ctx.fillRect(0,0,canvas.width,canvas.height);
  ctx.fillStyle="black";
- ctx.textAlign="center";
  ctx.font="24px Arial";
- ctx.fillText("MEU PRIMEIRO JOGO",canvas.width/2,140);
- ctx.font="16px Arial";
- ctx.fillText("APERTE ESPAÇO OU ↑",canvas.width/2,180);
+ ctx.textAlign="center";
+ ctx.fillText("TOQUE NA TELA PARA COMEÇAR",canvas.width/2,160);
  requestAnimationFrame(draw);
  return;
 }
 
-if(win||gameOver){
- ctx.fillStyle="rgba(0,0,0,.6)";
+// vitória
+if(win){
+ ctx.fillStyle="rgba(0,0,0,0.6)";
  ctx.fillRect(0,0,canvas.width,canvas.height);
  ctx.fillStyle="white";
+ ctx.font="28px Arial";
  ctx.textAlign="center";
- ctx.font="26px Arial";
- ctx.fillText(win?"VOCÊ VENCEU":"GAME OVER",canvas.width/2,160);
- ctx.font="16px Arial";
- ctx.fillText("Pressione R",canvas.width/2,200);
+ ctx.fillText("VOCÊ VENCEU!",canvas.width/2,160);
+ ctx.fillText("TOQUE PARA REINICIAR",canvas.width/2,200);
  return;
 }
 
-ctx.fillStyle="#cce6ff";
-ctx.fillRect(0,0,canvas.width,canvas.height);
+// game over
+if(gameOver){
+ ctx.fillStyle="rgba(0,0,0,0.6)";
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+ ctx.fillStyle="white";
+ ctx.font="28px Arial";
+ ctx.textAlign="center";
+ ctx.fillText("GAME OVER",canvas.width/2,160);
+ ctx.fillText("TOQUE PARA REINICIAR",canvas.width/2,200);
+ return;
+}
 
-// nuvens
-ctx.fillStyle="white";
-clouds.forEach(c=>{
- c.x+=0.2;
- if(c.x>WORLD_WIDTH)c.x=-100;
- ctx.beginPath();
- ctx.arc(c.x-cameraX,c.y,c.s,0,Math.PI*2);
- ctx.fill();
-});
+// fundo
+ctx.fillStyle="#e6f0ff";
+ctx.fillRect(0,0,canvas.width,canvas.height);
 
 // HUD
 ctx.fillStyle="black";
 ctx.textAlign="left";
-ctx.fillText("PONTOS "+score,20,30);
-ctx.fillText("VIDAS "+lives,20,50);
+ctx.fillText("PONTOS: "+score,20,40);
+ctx.fillText("VIDAS: "+lives,20,60);
 
 // física
 player.dy+=gravity;
 player.y+=player.dy;
-player.x+=player.dx;
 
 if(player.y>360-player.height){
  player.y=360-player.height;
@@ -141,11 +159,13 @@ if(player.y>360-player.height){
 ctx.fillStyle="green";
 platforms.forEach(p=>{
  ctx.fillRect(p.x-cameraX,p.y,p.w,10);
- if(player.x<p.x+p.w && player.x+player.width>p.x &&
-    player.y+player.height>p.y && player.y+player.height<p.y+10){
-  player.y=p.y-player.height;
-  player.dy=0;
-  onGround=true;
+ if(player.x<p.x+p.w &&
+    player.x+player.width>p.x &&
+    player.y+player.height>p.y &&
+    player.y+player.height<p.y+10){
+   player.y=p.y-player.height;
+   player.dy=0;
+   onGround=true;
  }
 });
 
@@ -154,15 +174,17 @@ flag.wave+=0.1;
 ctx.fillStyle="black";
 ctx.fillRect(flag.x-cameraX+8,flag.y-20,4,80);
 ctx.fillStyle="red";
-ctx.beginPath();
-ctx.moveTo(flag.x-cameraX,flag.y);
-ctx.lineTo(flag.x-cameraX+20+Math.sin(flag.wave)*6,flag.y+15);
-ctx.lineTo(flag.x-cameraX,flag.y+30);
-ctx.fill();
+ctx.fillRect(flag.x-cameraX,flag.y,flag.w,flag.h);
 
-if(player.x>flag.x)win=true;
+// vitória
+if(player.x<flag.x+flag.w &&
+ player.x+player.width>flag.x &&
+ player.y<flag.y+flag.h &&
+ player.y+player.height>flag.y){
+ win=true;
+}
 
-// bônus girando + partículas
+// moedas girando
 bonuses.forEach(b=>{
  if(b.active){
   b.rot+=0.1;
@@ -172,77 +194,52 @@ bonuses.forEach(b=>{
   ctx.drawImage(bonusImg,-12,-12,24,24);
   ctx.restore();
 
-  if(player.x<b.x+24 && player.x+player.width>b.x &&
-     player.y<b.y+24 && player.y+player.height>b.y){
-
+  if(player.x<b.x+24 &&
+   player.x+player.width>b.x &&
+   player.y<b.y+24 &&
+   player.y+player.height>b.y){
    b.active=false;
-coinSound.play();
-
-   for(let i=0;i<12;i++)
-    particles.push({x:b.x,y:b.y,dx:Math.random()*4-2,dy:Math.random()*-3,life:30});
-
-   score+=100;
-player.big=true;
-player.width=48;
-player.height=48;
-player.y-=16;
-
+   coinSound.play().catch(()=>{});
+   if(!player.big){
+    player.big=true;
+    player.width=48;
+    player.height=48;
+    player.y-=16;
+   }
   }
  }
 });
 
-// partículas
-particles.forEach(p=>{
- p.x+=p.dx;
- p.y+=p.dy;
- p.life--;
- ctx.fillRect(p.x-cameraX,p.y,2,2);
-});
-particles=particles.filter(p=>p.life>0);
-
 // inimigos
 enemies.forEach(e=>{
  e.x+=e.dx;
- if(e.x<0||e.x>WORLD_WIDTH)e.dx*=-1;
- ctx.drawImage(enemyImg,e.x-cameraX,e.y,24,24);
+ ctx.drawImage(enemyImg,e.x-cameraX,e.y,e.width,e.height);
 
- if(player.x<e.x+24 && player.x+player.width>e.x &&
-    player.y<e.y+24 && player.y+player.height>e.y){
+ if(player.x<e.x+e.width &&
+  player.x+player.width>e.x &&
+  player.y<e.y+e.height &&
+  player.y+player.height>e.y){
 
   if(player.dy>0){
-   e.x=-300;
+   e.x=-500;
    player.dy=-8;
    score+=50;
   }else if(!invincible){
    lives--;
-hitSound.play();
-
-   invincible=true;
-   setTimeout(()=>invincible=false,1200);
    if(lives<=0)gameOver=true;
+   player.x=50;
+   player.y=300;
+   invincible=true;
+   setTimeout(()=>invincible=false,1000);
   }
  }
 });
 
 // jogador
-if(!invincible||Date.now()%200<100)
- ctx.drawImage(playerImg,player.x-cameraX,player.y,player.width,player.height);
+ctx.drawImage(playerImg,player.x-cameraX,player.y,player.width,player.height);
 
+score++;
 requestAnimationFrame(draw);
 }
-
-// controles
-document.addEventListener("keydown",e=>{
- if(e.code==="Space"||e.code==="ArrowUp"){
-  gameStarted=true;
-  music.play();
-  if(onGround){player.dy=-12;onGround=false;}
-jumpSound.play();
-
- }
- if(e.code==="ArrowLeft")player.dx=-3;
- if(e.code==="ArrowRight")player.dx=3;
- if(e.code==="KeyR"&&(win||gameOver))location.reload();
-});
 
 draw();
